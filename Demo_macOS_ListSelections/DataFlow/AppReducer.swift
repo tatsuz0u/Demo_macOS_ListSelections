@@ -8,41 +8,58 @@
 import SwiftUI
 import ComposableArchitecture
 
+// Mock
+let ids = [UUID(), UUID(), UUID()]
+
 struct AppReducer: ReducerProtocol {
     struct State: Equatable {
         var columnVisibility = NavigationSplitViewVisibility.automatic
 
-        var sidebarSelection: Int?
-        var contentSelections = Set<Int>()
-        var detailSelections = Set<Int>()
+        var sidebarState = SidebarReducer.State(ids: ids)
+        var contentStates = IdentifiedArrayOf<ContentReducer.State>()
+        var detailStates = IdentifiedArrayOf<DetailReducer.State>()
+
+        init(
+            columnVisibility: NavigationSplitViewVisibility = .automatic,
+            sidebarState: SidebarReducer.State = .init(ids: ids),
+            contentStates: IdentifiedArrayOf<ContentReducer.State>
+                = .init(uniqueElements: ids.map(ContentReducer.State.init)),
+            detailStates: IdentifiedArrayOf<DetailReducer.State>
+                = .init(uniqueElements: ids.map(DetailReducer.State.init))
+        ) {
+            self.columnVisibility = columnVisibility
+            self.sidebarState = sidebarState
+            self.contentStates = contentStates
+            self.detailStates = detailStates
+        }
     }
 
     enum Action: Equatable {
         case setColumnVisibility(NavigationSplitViewVisibility)
-        case setSidebarSelection(Int?)
-        case setContentSelections(Set<Int>)
-        case setDetailSelections(Set<Int>)
+
+        case sidebar(action: SidebarReducer.Action)
+        case content(id: UUID, action: ContentReducer.Action)
+        case detail(id: UUID, action: DetailReducer.Action)
     }
 
-    var body: some ReducerProtocol<State, Action> {
+    var coreReducer: some ReducerProtocol<State, Action> {
         Reduce { state, action in
             switch action {
             case .setColumnVisibility(let visibility):
                 state.columnVisibility = visibility
                 return .none
-                
-            case .setSidebarSelection(let selection):
-                state.sidebarSelection = selection
-                return .none
 
-            case .setContentSelections(let selections):
-                state.contentSelections = selections
-                return .none
-
-            case .setDetailSelections(let selections):
-                state.detailSelections = selections
+            case .sidebar, .content, .detail:
                 return .none
             }
         }
+    }
+
+    var body: some ReducerProtocol<State, Action> {
+        coreReducer
+            .forEach(\.contentStates, action: /Action.content, ContentReducer.init)
+            .forEach(\.detailStates, action: /Action.detail, DetailReducer.init)
+        
+        Scope(state: \.sidebarState, action: /Action.sidebar, SidebarReducer.init)
     }
 }

@@ -19,43 +19,36 @@ struct RootView: View {
                     send: AppReducer.Action.setColumnVisibility
                 ),
                 sidebar: {
-                    List(
-                        selection: viewStore.binding(
-                            get: \.sidebarSelection,
-                            send: AppReducer.Action.setSidebarSelection
+                    Sidebar(
+                        store: store.scope(
+                            state: \.sidebarState,
+                            action: AppReducer.Action.sidebar
                         )
-                    ) {
-                        ForEach(0...10, id: \.self) { index in
-                            Text("Sidebar row \(index)")
-                        }
-                    }
-                    .navigationTitle("Sidebar")
+                    )
                 },
                 content: {
-                    List(
-                        selection: viewStore.binding(
-                            get: \.contentSelections,
-                            send: AppReducer.Action.setContentSelections
-                        )
-                    ) {
-                        ForEach(0...10, id: \.self) { index in
-                            Text("Content row \(index)")
+                    ZStack {
+                        ForEachStore(
+                            store.scope(
+                                state: \.contentStates,
+                                action: AppReducer.Action.content
+                            )
+                        ) { store in
+                            ContentView(store: store, selectedID: viewStore.selectedID)
                         }
                     }
-                    .navigationTitle("Content")
                 },
                 detail: {
-                    List(
-                        selection: viewStore.binding(
-                            get: \.detailSelections,
-                            send: AppReducer.Action.setDetailSelections
-                        )
-                    ) {
-                        ForEach(0...100, id: \.self) { index in
-                            Text("Detail row \(index)")
+                    ZStack {
+                        ForEachStore(
+                            store.scope(
+                                state: \.detailStates,
+                                action: AppReducer.Action.detail
+                            )
+                        ) { store in
+                            DetailView(store: store, selectedID: viewStore.selectedID)
                         }
                     }
-                    .navigationTitle("Detail")
                 }
             )
         }
@@ -64,20 +57,38 @@ struct RootView: View {
 
 private struct ViewState: Equatable {
     let columnVisibility: NavigationSplitViewVisibility
-    let sidebarSelection: Int?
-    let contentSelections: Set<Int>
-    let detailSelections: Set<Int>
+    let selectedID: UUID?
 
     init(state: AppReducer.State) {
         self.columnVisibility = state.columnVisibility
-        self.sidebarSelection = state.sidebarSelection
-        self.contentSelections = state.contentSelections
-        self.detailSelections = state.detailSelections
+        self.selectedID = state.sidebarState.selection
     }
 }
 
 struct RootView_Previews: PreviewProvider {
     static var previews: some View {
-        RootView(store: .init(initialState: .init(), reducer: AppReducer()))
+        RootView(
+            store: .init(
+                initialState: .init(
+                    columnVisibility: .all,
+                    sidebarState: .init(
+                        ids: ids,
+                        selection: ids.first
+                    )
+                ),
+                reducer: .empty
+            )
+        )
+        .previewDisplayName("Selected")
+
+        RootView(
+            store: .init(
+                initialState: .init(
+                    columnVisibility: .all
+                ),
+                reducer: .empty
+            )
+        )
+        .previewDisplayName("Not Selected")
     }
 }
