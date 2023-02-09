@@ -20,8 +20,19 @@ struct ContentView: View {
                     send: ContentReducer.Action.setSelections
                 )
             ) {
-                ForEach(0...10, id: \.self) { index in
-                    Text("Content row \(index)")
+                Section("Status") {
+                    ForEach(ContentReducer.Status.allCases, id: \.self) { status in
+                        NavigationLink(value: ContentReducer.Selection.status(status)) {
+                            Text(status.rawValue.capitalized)
+                        }
+                    }
+                }
+                Section("Category") {
+                    ForEach(ContentReducer.Category.allCases, id: \.self) { category in
+                        NavigationLink(value: ContentReducer.Selection.category(category)) {
+                            Text(category.rawValue.capitalized)
+                        }
+                    }
                 }
             }
             .opacity(viewStore.id == selectedID ? 1 : 0)
@@ -32,7 +43,7 @@ struct ContentView: View {
 
 private struct ViewState: Equatable {
     let id: UUID
-    let selections: Set<Int>
+    let selections: Set<ContentReducer.Selection>
 
     init(state: ContentReducer.State) {
         self.id = state.id
