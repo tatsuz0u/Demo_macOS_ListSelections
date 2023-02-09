@@ -14,23 +14,33 @@ struct ContentView: View {
 
     var body: some View {
         WithViewStore(store, observe: ViewState.init) { viewStore in
-            List(
-                selection: viewStore.binding(
-                    get: \.selections,
-                    send: ContentReducer.Action.setSelections
-                )
-            ) {
-                Section("Status") {
-                    ForEach(ContentReducer.Status.allCases, id: \.self) { status in
-                        NavigationLink(value: ContentReducer.Selection.status(status)) {
-                            Text(status.rawValue.capitalized)
+            VStack(spacing: 0) {
+                List(
+                    selection: viewStore.binding(
+                        get: \.selectedStatus,
+                        send: ContentReducer.Action.selectStatus
+                    )
+                ) {
+                    Section("Status") {
+                        ForEach(ContentReducer.Status.allCases, id: \.self) { status in
+                            NavigationLink(value: ContentReducer.Selection.status(status)) {
+                                Text(status.rawValue.capitalized)
+                            }
                         }
                     }
                 }
-                Section("Category") {
-                    ForEach(ContentReducer.Category.allCases, id: \.self) { category in
-                        NavigationLink(value: ContentReducer.Selection.category(category)) {
-                            Text(category.rawValue.capitalized)
+
+                List(
+                    selection: viewStore.binding(
+                        get: \.selectedCategory,
+                        send: ContentReducer.Action.selectCategory
+                    )
+                ) {
+                    Section("Category") {
+                        ForEach(ContentReducer.Category.allCases, id: \.self) { category in
+                            NavigationLink(value: ContentReducer.Selection.category(category)) {
+                                Text(category.rawValue.capitalized)
+                            }
                         }
                     }
                 }
@@ -43,11 +53,13 @@ struct ContentView: View {
 
 private struct ViewState: Equatable {
     let id: UUID
-    let selections: Set<ContentReducer.Selection>
+    let selectedStatus: ContentReducer.Status?
+    let selectedCategory: ContentReducer.Category?
 
     init(state: ContentReducer.State) {
         self.id = state.id
-        self.selections = state.selections
+        self.selectedStatus = state.selectedStatus
+        self.selectedCategory = state.selectedCategory
     }
 }
 
