@@ -11,7 +11,7 @@ import SwiftUI
 struct Demo_macOS_ListSelectionsApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView(store: .init(initialState: .init(), reducer: AppReducer()))
         }
     }
 }
